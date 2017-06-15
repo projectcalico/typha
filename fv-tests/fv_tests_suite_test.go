@@ -15,20 +15,26 @@
 package fvtests_test
 
 import (
+	"os"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"testing"
-)
 
-import (
 	"github.com/projectcalico/libcalico-go/lib/testutils"
 	"github.com/projectcalico/typha/pkg/logutils"
+	log "github.com/sirupsen/logrus"
 )
 
 func init() {
 	testutils.HookLogrusForGinkgo()
 	logutils.ConfigureEarlyLogging()
+	logLevel, err := log.ParseLevel(os.Getenv("FV_TESTS_LOG_LEVEL"))
+	if err != nil {
+		panic(err)
+	}
+	log.SetLevel(logLevel)
 }
 
 func TestFvTests(t *testing.T) {

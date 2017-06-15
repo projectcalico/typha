@@ -97,6 +97,7 @@ DOCKER_GO_BUILD := mkdir -p .go-pkg-cache && \
                               --net=host \
                               $(EXTRA_DOCKER_ARGS) \
                               -e LOCAL_USER_ID=$(MY_UID) \
+                              -e FV_TESTS_LOG_LEVEL=$(FV_TESTS_LOG_LEVEL) \
                               -v $${PWD}:/go/src/github.com/projectcalico/typha:rw \
                               -v $${PWD}/.go-pkg-cache:/go/pkg:rw \
                               -w /go/src/github.com/projectcalico/typha \
