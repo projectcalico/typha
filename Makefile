@@ -2,14 +2,33 @@
 # The build architecture is select by setting the ARCH variable.
 # For example: When building on ppc64le you could use ARCH=ppc64le make <....>.
 # When ARCH is undefined it defaults to amd64.
-ARCH?=amd64
+ARCH ?= $(shell uname -m)
+
 ifeq ($(ARCH),amd64)
 	ARCHTAG?=
 	GO_BUILD_VER?=v0.9
 endif
 
+ifeq ($(ARCH),x86_64)
+	ARCHTAG?=
+	ARCH=amd64
+	GO_BUILD_VER?=v0.9
+endif
+
 ifeq ($(ARCH),ppc64le)
 	ARCHTAG:=-ppc64le
+	GO_BUILD_VER?=latest
+endif
+
+ifeq ($(ARCH),aarch64)
+	ARCHTAG?=-arm64
+	ARCH=arm64
+	GO_BUILD_VER?=latest
+endif
+
+ifeq ($(ARCH),arm64)
+	ARCHTAG?=-arm64
+	ARCH=arm64
 	GO_BUILD_VER?=latest
 endif
 
@@ -24,8 +43,9 @@ help:
 	@echo
 	@echo "Builds:"
 	@echo
-	@echo "  make all           Build all the binary packages."
-	@echo "  make calico/typha  Build calico/typha docker image."
+	@echo "  make all               Build all the binary packages."
+	@echo "  make bin/calico-typha  Build the typha binary."
+	@echo "  make calico/typha      Build calico/typha docker image; includes building the binary."
 	@echo
 	@echo "Tests:"
 	@echo
@@ -47,7 +67,7 @@ help:
 all: calico/typha bin/typha-client-$(ARCH)
 test: ut
 
-GO_BUILD_CONTAINER?=calico/go-build$(ARCHTAG):$(GO_BUILD_VER)
+GO_BUILD_CONTAINER?=calico/go-build:$(GO_BUILD_VER)$(ARCHTAG)
 
 # Figure out version information.  To support builds from release tarballs, we default to
 # <unknown> if this isn't a git checkout.
@@ -77,7 +97,7 @@ calico/typha: bin/calico-typha-$(ARCH)
 	rm -rf docker-image/bin
 	mkdir -p docker-image/bin
 	cp bin/calico-typha-$(ARCH) docker-image/bin/
-	docker build --pull -t calico/typha$(ARCHTAG) docker-image -f docker-image/Dockerfile$(ARCHTAG)
+	docker build --pull -t calico/typha:latest$(ARCHTAG) docker-image -f docker-image/Dockerfile$(ARCHTAG)
 
 # Pre-configured docker run command that runs as this user with the repo
 # checked out to /code, uses the --rm flag to avoid leaving the container
@@ -131,6 +151,8 @@ LDFLAGS:=-ldflags "\
         -X github.com/projectcalico/typha/pkg/buildinfo.BuildDate=$(DATE) \
         -X github.com/projectcalico/typha/pkg/buildinfo.GitRevision=$(GIT_COMMIT) \
         -B 0x$(BUILD_ID)"
+
+bin/calico-typha: bin/calico-typha-$(ARCH)
 
 bin/calico-typha-$(ARCH): $(TYPHA_GO_FILES) vendor/.up-to-date
 	@echo Building typha...
@@ -287,12 +309,12 @@ release-once-tagged:
 	@echo "Will now build release artifacts..."
 	@echo
 	$(MAKE) bin/calico-typha-$(ARCH) calico/typha
-	docker tag calico/typha$(ARCHTAG) calico/typha$(ARCHTAG):$(VERSION)
-	docker tag calico/typha$(ARCHTAG) quay.io/calico/typha$(ARCHTAG):latest
-	docker tag calico/typha$(ARCHTAG):$(VERSION) quay.io/calico/typha$(ARCHTAG):$(VERSION)
+	docker tag calico/typha:latest$(ARCHTAG) calico/typha:$(VERSION)$(ARCHTAG)
+	docker tag calico/typha:latest$(ARCHTAG) quay.io/calico/typha:latest$(ARCHTAG)
+	docker tag calico/typha:$(VERSION)$(ARCHTAG) quay.io/calico/typha:$(VERSION)$(ARCHTAG)
 	@echo
 	@echo "Checking built typha has correct version..."
-	@if docker run quay.io/calico/typha$(ARCHTAG):$(VERSION) calico-typha --version | grep -q '$(VERSION)$$'; \
+	@if docker run quay.io/calico/typha:$(VERSION)$(ARCHTAG) calico-typha --version | grep -q '$(VERSION)$$'; \
 	then \
 	  echo "Check successful."; \
 	else \
@@ -303,8 +325,8 @@ release-once-tagged:
 	@echo "Typha release artifacts have been built:"
 	@echo
 	@echo "- Binary:                 bin/calico-typha-$(ARCH)"
-	@echo "- Docker container image: calico/typha$(ARCHTAG):$(VERSION)"
-	@echo "- Same, tagged for Quay:  quay.io/calico/typha$(ARCHTAG):$(VERSION)"
+	@echo "- Docker container image: calico/typha:$(VERSION)$(ARCHTAG)"
+	@echo "- Same, tagged for Quay:  quay.io/calico/typha:$(VERSION)$(ARCHTAG)"
 	@echo
 	@echo "Now to publish this release to Github:"
 	@echo
@@ -325,11 +347,11 @@ release-once-tagged:
 	@echo
 	@echo "Then, push the versioned docker images to Dockerhub and Quay:"
 	@echo
-	@echo "- docker push calico/typha$(ARCHTAG):$(VERSION)"
-	@echo "- docker push quay.io/calico/typha$(ARCHTAG):$(VERSION)"
+	@echo "- docker push calico/typha:$(VERSION)$(ARCHTAG)"
+	@echo "- docker push quay.io/calico/typha:$(VERSION)$(ARCHTAG)"
 	@echo
 	@echo "If this is the latest release from the most recent stable"
 	@echo "release series, also push the 'latest' tag:"
 	@echo
-	@echo "- docker push calico/typha$(ARCHTAG):latest"
-	@echo "- docker push quay.io/calico/typha$(ARCHTAG):latest"
+	@echo "- docker push calico/typha:latest$(ARCHTAG)"
+	@echo "- docker push quay.io/calico/typha:latest$(ARCHTAG)"
