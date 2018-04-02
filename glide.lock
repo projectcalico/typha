@@ -1,5 +1,5 @@
 hash: 223a8717bfd307d53e5f68136e21cb33bfd1b3be6d6cc149e6d91f655cb3826c
-updated: 2018-03-29T19:01:54.163363376Z
+updated: 2018-04-02T18:11:46.929179299Z
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -263,7 +263,7 @@ imports:
   - list
   - trie/ctrie
 - name: golang.org/x/crypto
-  version: 88942b9c40a4c9d203b82b3731787b672d6e809b
+  version: 12892e8c234f4fe6f6803f052061de9057903bb2
   subpackages:
   - ssh/terminal
 - name: golang.org/x/net
