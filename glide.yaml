@@ -29,7 +29,7 @@ import:
 - package: github.com/go-ini/ini
   version: ^1.21.0
 - package: github.com/projectcalico/libcalico-go
-  version: 8bf1e12ff13ecf994ae410efdf7808ed934a53fc
+  version: d01e8583997190a359ae6869ff213e446da2ab6a
   subpackages:
   - lib
 - package: github.com/sirupsen/logrus
@@ -52,9 +52,9 @@ import:
 - package: github.com/emicklei/go-restful
   version: v1.2
 - package: k8s.io/client-go
-  version: 82aa063804cf055e16e8911250f888bc216e8b61
+  version: v7.0.0
 - package: k8s.io/apimachinery
-  version: release-1.8
+  version: kubernetes-1.10.0
 - package: github.com/gogo/protobuf
   version: ^0.3.0
 - package: github.com/prometheus/procfs
