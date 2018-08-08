@@ -12,7 +12,7 @@ import:
 - package: github.com/kardianos/osext
 - package: github.com/mipearson/rfw
 - package: github.com/projectcalico/libcalico-go
-  version: cac4ce6d0f2f1fdcaac2dcbe613374465cfd4953
+  version: feature-internal-rr
   subpackages:
   - lib/apiconfig
   - lib/backend/api
@@ -28,6 +28,18 @@ import:
   subpackages:
   - prometheus
   - prometheus/promhttp
+# prometheus/client_golang pulls in prometheus/client_model, which depends
+# on this version of golang/protobuf (but none of the prometheus repos provide
+# a dependency manifest). The genproto library (another indirect and unpinned 
+# dependency) also dpends on this version of protobuf.
+- package: github.com/golang/protobuf
+  version: v1.1.0
+# Another prometheus dependency; without this pin, floats to a master version that
+# is not compatible with glide.
+- package: github.com/prometheus/procfs
+  version: a6e9df898b1336106c743392c48ee0b71f5c4efa
+- package: github.com/prometheus/common
+  version: c7de2306084e37d54b8be01f3541a8464345e9a5
 - package: github.com/sirupsen/logrus
   # v1.0.5 causes test breakages.
   version: v1.0.4
@@ -35,11 +47,7 @@ import:
   subpackages:
   - pkg/apis/meta/v1
 - package: k8s.io/client-go
+  version: v7.0.0
   subpackages:
   - kubernetes
   - rest
-testImport:
-- package: github.com/onsi/ginkgo
-  subpackages:
-  - extensions/table
-- package: github.com/onsi/gomega
