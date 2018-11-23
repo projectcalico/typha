@@ -22,8 +22,6 @@ import (
 	"math/rand"
 	"runtime"
 
-	"github.com/docopt/docopt-go"
-
 	"context"
 
 	"github.com/projectcalico/libcalico-go/lib/backend/api"
