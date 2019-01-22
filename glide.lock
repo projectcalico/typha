@@ -1,5 +1,5 @@
 hash: c62a689de2443c0cd0f99f500d58e326b54079c187989b2cd8aae49e1653a65d
-updated: 2019-01-07T04:07:21.226725219Z
+updated: 2019-01-22T12:01:30.727317-08:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -47,7 +47,7 @@ imports:
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
-  version: 9c8236e659b76e87bf02044d06fde8683008ff3e
+  version: 6ed8d5f64cd79a498d1f3fab5880cc376ce41bbe
 - name: github.com/gogo/protobuf
   version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
   subpackages:
@@ -118,7 +118,7 @@ imports:
 - name: github.com/modern-go/reflect2
   version: 05fbef0ca5da472bbf96c9322b84a53edc03c9fd
 - name: github.com/onsi/ginkgo
-  version: 0d4f08024c0112cfde4b94bc45e25777eedb4561
+  version: 2e1be8f7d90e9d3e3e58b0ce470f2f14d075406f
   subpackages:
   - config
   - extensions/table
@@ -139,7 +139,7 @@ imports:
   - reporters/stenographer/support/go-isatty
   - types
 - name: github.com/onsi/gomega
-  version: 9078de543588a442b7e49ae2e887db64812d77ce
+  version: 65fb64232476ad9046e57c26cd0bff3d3a8dc6cd
   subpackages:
   - format
   - internal/assertion
@@ -212,7 +212,7 @@ imports:
   - lib/validator/v3
   - lib/watch
 - name: github.com/prometheus/client_golang
-  version: 1cafe34db7fdec6022e17e00e1c1ea501022f3e4
+  version: 773f5027234d0b08adf766be34f55df2f312abf7
   subpackages:
   - prometheus
   - prometheus/internal
