@@ -44,8 +44,8 @@ endif
 # assuming that there is a local checkout of libcalico in the same directory as this repo.
 LOCAL_BUILD_MOUNTS ?=
 ifeq ($(LOCAL_BUILD),true)
-LOCAL_BUILD_MOUNTS = -v $(CURDIR)/../libcalico-go:/go/src/$(PACKAGE_NAME)/vendor/github.com/projectcalico/libcalico-go:ro \
-	-v $(CURDIR)/.empty:/go/src/$(PACKAGE_NAME)/vendor/github.com/projectcalico/libcalico-go/vendor:ro
+LOCAL_BUILD_MOUNTS = -v $(CURDIR)/../libcalico-go:/$(PACKAGE_NAME)/vendor/github.com/projectcalico/libcalico-go:ro \
+	-v $(CURDIR)/.empty:/$(PACKAGE_NAME)/vendor/github.com/projectcalico/libcalico-go/vendor:ro
 endif
 
 # we want to be able to run the same recipe on multiple targets keyed on the image name
@@ -97,7 +97,7 @@ PUSH_NONMANIFEST_IMAGES=$(filter-out $(PUSH_MANIFEST_IMAGES),$(PUSH_IMAGES))
 # location of docker credentials to push manifests
 DOCKER_CONFIG ?= $(HOME)/.docker/config.json
 
-GO_BUILD_VER?=v0.20
+GO_BUILD_VER?=v0.22
 # For building, we use the go-build image for the *host* architecture, even if the target is different
 # the one for the host should contain all the necessary cross-compilation tools
 # we do not need to use the arch since go-build:v0.15 now is multi-arch manifest
@@ -151,24 +151,27 @@ endif
 ifdef SSH_AUTH_SOCK
   EXTRA_DOCKER_ARGS += -v $(SSH_AUTH_SOCK):/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent
 endif
+
+GINKGO_ARGS := -mod=vendor
+EXTRA_DOCKER_ARGS := -e GO111MODULE=on
+
 DOCKER_RUN := mkdir -p .go-pkg-cache && \
                    docker run --rm \
                               --net=host \
                               $(EXTRA_DOCKER_ARGS) \
                               -e LOCAL_USER_ID=$(LOCAL_USER_ID) \
-                              -v $(HOME)/.glide:/home/user/.glide:rw \
-                              -v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
+                              -v $(CURDIR):/$(PACKAGE_NAME):rw \
                               -v $(CURDIR)/.go-pkg-cache:/go/pkg:rw \
-                              -w /go/src/$(PACKAGE_NAME) \
+                              -w /$(PACKAGE_NAME) \
                               -e GOARCH=$(ARCH)
 
 .PHONY: clean
 clean:
+	-chmod -R +w .go-pkg-cache
 	rm -rf bin \
 	       docker-image/bin \
 	       build \
 	       $(GENERATED_GO_FILES) \
-	       .glide \
 	       vendor \
 	       .go-pkg-cache \
 	       check-licenses/dependency-licenses.txt \
@@ -187,22 +190,11 @@ build-all: $(addprefix sub-build-,$(VALIDARCHES))
 sub-build-%:
 	$(MAKE) build ARCH=$*
 
-# Update the vendored dependencies with the latest upstream versions matching
-# our glide.yaml.  If there area any changes, this updates glide.lock
-# as a side effect.  Unless you're adding/updating a dependency, you probably
-# want to use the vendor target to install the versions from glide.lock.
-.PHONY: update-vendor
-update-vendor:
-	mkdir -p $$HOME/.glide
-	$(DOCKER_RUN) $(CALICO_BUILD) glide up --strip-vendor
-	touch vendor/.up-to-date
-
 # vendor is a shortcut for force rebuilding the go vendor directory.
 .PHONY: vendor
 vendor: vendor/.up-to-date
-vendor/.up-to-date: glide.lock
-	mkdir -p $$HOME/.glide
-	$(DOCKER_RUN) $(CALICO_BUILD) glide install --strip-vendor
+vendor/.up-to-date: go.mod
+	$(DOCKER_RUN) $(CALICO_BUILD) go mod vendor
 	touch vendor/.up-to-date
 
 # Default the libcalico repo and version but allow them to be overridden
@@ -210,18 +202,18 @@ LIBCALICO_BRANCH?=$(shell git rev-parse --abbrev-ref HEAD)
 LIBCALICO_REPO?=github.com/projectcalico/libcalico-go
 LIBCALICO_VERSION?=$(shell git ls-remote git@github.com:projectcalico/libcalico-go $(LIBCALICO_BRANCH) 2>/dev/null | cut -f 1)
 
-## Update libcalico pin in glide.yaml
+## Update libcalico pin in go.mod
 update-libcalico:
 	$(DOCKER_RUN) $(CALICO_BUILD) sh -c '\
         echo "Updating libcalico to $(LIBCALICO_VERSION) from $(LIBCALICO_REPO)"; \
-        export OLD_VER=$$(grep --after 50 libcalico-go glide.yaml |grep --max-count=1 --only-matching --perl-regexp "version:\s*\K[^\s]+") ;\
+        export OLD_VER=$$(grep --after 50 libcalico-go go.mod |grep --max-count=1 --only-matching --perl-regexp "version:\s*\K[^\s]+") ;\
         echo "Old version: $$OLD_VER";\
 	if [ "$(LIBCALICO_VERSION)" != $$OLD_VER ]; then \
-            sed -i "s/$$OLD_VER/$(LIBCALICO_VERSION)/" glide.yaml && \
+            sed -i "s/$$OLD_VER/$(LIBCALICO_VERSION)/" go.mod && \
 	    if [ "$(LIBCALICO_REPO)" != "github.com/projectcalico/libcalico-go" ]; then \
-              glide mirror set https://github.com/projectcalico/libcalico-go $(LIBCALICO_REPO) --vcs git; glide mirror list; \
+	      echo "replace github.com/projectcalico/libcalico-go => $(LIBCALICO_REPO)" >> go.mod; \
             fi;\
-          glide up --strip-vendor || glide up --strip-vendor; \
+          go mod vendor; \
         fi'
 
 bin/calico-typha: bin/calico-typha-$(ARCH)
@@ -339,17 +331,17 @@ check-licenses/dependency-licenses.txt: vendor/.up-to-date
 
 foss-checks: vendor
 	@echo Running $@...
-	@docker run --rm -v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
+	@docker run --rm -v $(CURDIR):/$(PACKAGE_NAME):rw \
 	  -e LOCAL_USER_ID=$(LOCAL_USER_ID) \
 	  -e FOSSA_API_KEY=$(FOSSA_API_KEY) \
-	  -w /go/src/$(PACKAGE_NAME) \
+	  -w /$(PACKAGE_NAME) \
 	  $(CALICO_BUILD) /usr/local/bin/fossa
 
 .PHONY: go-meta-linter
 go-meta-linter: vendor/.up-to-date $(GENERATED_GO_FILES)
 	# Run staticcheck stand-alone since gometalinter runs concurrent copies, which
 	# uses a lot of RAM.
-	$(DOCKER_RUN) $(CALICO_BUILD) sh -c 'glide nv | xargs -n 3 staticcheck'
+	$(DOCKER_RUN) $(CALICO_BUILD) sh -c 'ls -1d */ | grep -vw vendor | sed 's/$/.../' | xargs -n 3 staticcheck'
 	$(DOCKER_RUN) $(CALICO_BUILD) gometalinter --enable-gc \
 		--deadline=300s \
 		--disable-all \
@@ -360,7 +352,7 @@ go-meta-linter: vendor/.up-to-date $(GENERATED_GO_FILES)
 # Run go fmt on all our go files.
 .PHONY: go-fmt goimports fix
 go-fmt goimports fix:
-	$(DOCKER_RUN) $(CALICO_BUILD) sh -c 'glide nv -x | \
+	$(DOCKER_RUN) $(CALICO_BUILD) sh -c 'ls -1d */ | grep -vw vendor | \
 	                          grep -v -e "^\\.$$" | \
 	                          xargs goimports -w -local github.com/projectcalico/'
 
@@ -507,12 +499,12 @@ endif
 .PHONY: ut-no-cover
 ut-no-cover: vendor/.up-to-date $(SRC_FILES)
 	@echo Running Go UTs without coverage.
-	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) ginkgo -r $(GINKGO_OPTIONS)
+	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) ginkgo -r $(GINKGO_ARGS)
 
 .PHONY: ut-watch
 ut-watch: vendor/.up-to-date $(SRC_FILES)
 	@echo Watching go UTs for changes...
-	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) ginkgo watch -r $(GINKGO_OPTIONS)
+	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) ginkgo watch -r $(GINKGO_ARGS)
 
 # Launch a browser with Go coverage stats for the whole project.
 .PHONY: cover-browser
@@ -543,7 +535,6 @@ bin/calico-typha.transfer-url: bin/calico-typha-$(ARCH)
 # Install or update the tools used by the build
 .PHONY: update-tools
 update-tools:
-	go get -u github.com/Masterminds/glide
 	go get -u github.com/onsi/ginkgo/ginkgo
 
 help:
@@ -574,7 +565,7 @@ help:
 	@echo
 	@echo "  make update-vendor  Update the vendor directory with new "
 	@echo "                      versions of upstream packages.  Record results"
-	@echo "                      in glide.lock."
+	@echo "                      in go.mod."
 	@echo "  make go-fmt        Format our go code."
 	@echo "  make clean         Remove binary files."
 	@echo "-----------------------------------------"
