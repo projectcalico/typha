@@ -69,7 +69,7 @@ var _ = Describe("Logutils", func() {
 	})
 	It("Should add correct file when invoked via log.WithField(...).Info", func() {
 		log.WithField("foo", "bar").Info("Test log")
-		//	Expect(buf.String()).To(ContainSubstring("logutils_test.go"))
+		Expect(buf.String()).To(ContainSubstring("logutils_test.go"))
 	})
 })
 
