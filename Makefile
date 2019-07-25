@@ -144,6 +144,9 @@ endif
 LOCAL_USER_ID:=$(shell id -u)
 LOCAL_GROUP_ID:=$(shell id -g)
 
+EXTRA_DOCKER_ARGS := -e GO111MODULE=on
+GINKGO_ARGS := -mod=vendor
+
 # Allow libcalico-go and the ssh auth sock to be mapped into the build container.
 ifdef LIBCALICOGO_PATH
   EXTRA_DOCKER_ARGS += -v $(LIBCALICOGO_PATH):/go/src/github.com/projectcalico/libcalico-go:ro
@@ -151,9 +154,6 @@ endif
 ifdef SSH_AUTH_SOCK
   EXTRA_DOCKER_ARGS += -v $(SSH_AUTH_SOCK):/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent
 endif
-
-GINKGO_ARGS := -mod=vendor
-EXTRA_DOCKER_ARGS := -e GO111MODULE=on
 
 DOCKER_RUN := mkdir -p .go-pkg-cache && \
                    docker run --rm \
@@ -223,7 +223,7 @@ bin/calico-typha-$(ARCH): $(SRC_FILES) vendor/.up-to-date
 	@echo Building typha...
 	mkdir -p bin
 	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) \
-	    sh -c 'go build -v -i -o $@ -v $(LDFLAGS) "$(PACKAGE_NAME)/cmd/calico-typha" && \
+	    sh -c 'GO111MODULE=on go build -v -i -o $@ -v $(LDFLAGS) "$(PACKAGE_NAME)/cmd/calico-typha" && \
 		( ldd $@ 2>&1 | grep -q -e "Not a valid dynamic program" \
 		-e "not a dynamic executable" || \
 		( echo "Error: bin/calico-typha was not statically linked"; false ) )'
@@ -232,7 +232,7 @@ bin/typha-client-$(ARCH): $(SRC_FILES) vendor/.up-to-date
 	@echo Building typha client...
 	mkdir -p bin
 	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) \
-	    sh -c 'go build -v -i -o $@ -v $(LDFLAGS) "$(PACKAGE_NAME)/cmd/typha-client" && \
+	    sh -c 'GO111MODULE=on go build -v -i -o $@ -v $(LDFLAGS) "$(PACKAGE_NAME)/cmd/typha-client" && \
 		( ldd $@ 2>&1 | grep -q -e "Not a valid dynamic program" \
 		-e "not a dynamic executable" || \
 		( echo "Error: bin/typha-client was not statically linked"; false ) )'
@@ -317,7 +317,7 @@ sub-tag-images-%:
 static-checks:
 	$(MAKE) go-meta-linter check-licenses
 
-bin/check-licenses: $(SRC_FILES)
+bin/check-licenses: vendor/.up-to-date $(SRC_FILES)
 	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) go build -v -i -o $@ "$(PACKAGE_NAME)/check-licenses"
 
 .PHONY: check-licenses
