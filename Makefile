@@ -97,7 +97,7 @@ PUSH_NONMANIFEST_IMAGES=$(filter-out $(PUSH_MANIFEST_IMAGES),$(PUSH_IMAGES))
 # location of docker credentials to push manifests
 DOCKER_CONFIG ?= $(HOME)/.docker/config.json
 
-GO_BUILD_VER?=v0.22
+GO_BUILD_VER?=v0.23
 # For building, we use the go-build image for the *host* architecture, even if the target is different
 # the one for the host should contain all the necessary cross-compilation tools
 # we do not need to use the arch since go-build:v0.15 now is multi-arch manifest
@@ -161,7 +161,8 @@ DOCKER_RUN := mkdir -p .go-pkg-cache && \
                               $(EXTRA_DOCKER_ARGS) \
                               -e LOCAL_USER_ID=$(LOCAL_USER_ID) \
                               -v $(CURDIR):/$(PACKAGE_NAME):rw \
-                              -v $(CURDIR)/.go-pkg-cache:/go/pkg:rw \
+                              -v $(CURDIR)/.go-pkg-cache:/go-cache:rw \
+			      -e GOCACHE=/go-cache \
                               -w /$(PACKAGE_NAME) \
                               -e GOARCH=$(ARCH)
 
@@ -337,17 +338,14 @@ foss-checks: vendor
 	  -w /$(PACKAGE_NAME) \
 	  $(CALICO_BUILD) /usr/local/bin/fossa
 
+# TODO: re-enable these linters !
+LINT_ARGS := --disable gosimple,govet,structcheck,errcheck,goimports,unused
+
 .PHONY: go-meta-linter
 go-meta-linter: vendor/.up-to-date $(GENERATED_GO_FILES)
 	# Run staticcheck stand-alone since gometalinter runs concurrent copies, which
 	# uses a lot of RAM.
-	$(DOCKER_RUN) $(CALICO_BUILD) sh -c 'ls -1d */ | grep -vw vendor | sed 's/$/.../' | xargs -n 3 staticcheck'
-	$(DOCKER_RUN) $(CALICO_BUILD) gometalinter --enable-gc \
-		--deadline=300s \
-		--disable-all \
-		--enable=goimports \
-		--enable=errcheck \
-		--vendor ./...
+	$(DOCKER_RUN) $(CALICO_BUILD) golangci-lint run --deadline 5m $(LINT_ARGS)
 
 # Run go fmt on all our go files.
 .PHONY: go-fmt goimports fix
