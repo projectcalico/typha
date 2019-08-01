@@ -188,7 +188,7 @@ sub-build-%:
 # vendor is a shortcut for force rebuilding the go vendor directory.
 .PHONY: vendor
 vendor: vendor/.up-to-date
-vendor/.up-to-date: go.mod
+vendor/.up-to-date: go.mod go.sum
 	$(DOCKER_RUN) $(CALICO_BUILD) go mod vendor
 	touch vendor/.up-to-date
 
@@ -196,15 +196,16 @@ vendor/.up-to-date: go.mod
 LIBCALICO_BRANCH?=$(shell git rev-parse --abbrev-ref HEAD)
 LIBCALICO_REPO?=github.com/projectcalico/libcalico-go
 LIBCALICO_VERSION?=$(shell git ls-remote git@github.com:projectcalico/libcalico-go $(LIBCALICO_BRANCH) 2>/dev/null | cut -f 1)
+LIBCALICO_OLDVER?=$(shell grep libcalico-go go.mod | cut -d' ' -f2)
 
 ## Update libcalico pin in go.mod
 update-libcalico:
 	$(DOCKER_RUN) $(CALICO_BUILD) sh -c '\
-        echo "Updating libcalico to $(LIBCALICO_VERSION) from $(LIBCALICO_REPO)"; \
-        export OLD_VER=$$(grep libcalico-go /github.com/projectcalico/typha/go.mod | awk '{print $$2}') ;\
-        echo "Old version: $$OLD_VER";\
-	if [ "$(LIBCALICO_VERSION)" != $$OLD_VER ]; then \
-            sed -i "s/$$OLD_VER/v0.0.0 $(LIBCALICO_VERSION)/" go.mod && \
+        echo "Updating libcalico-go to $(LIBCALICO_VERSION) from $(LIBCALICO_REPO)"; \
+        echo "Old version: $(LIBCALICO_OLDVER)";\
+	if [ "$(LIBCALICO_VERSION)" != "$(LIBCALICO_OLDVER)" ]; then \
+	    sed -i "/libcalico-go/d" go.mod go.sum; \
+	    go get $(LIBCALICO_REPO)@$(LIBCALICO_VERSION); \
 	    if [ "$(LIBCALICO_REPO)" != "github.com/projectcalico/libcalico-go" ]; then \
 	      echo "replace github.com/projectcalico/libcalico-go => $(LIBCALICO_REPO) v0.0.0-$(LIBCALICO_VERSION)" >> go.mod; \
             fi;\
@@ -310,7 +311,7 @@ sub-tag-images-%:
 ###############################################################################
 .PHONY: static-checks
 static-checks:
-	$(MAKE) go-meta-linter
+	$(MAKE) golangci-lint
 
 foss-checks: vendor
 	@echo Running $@...
@@ -323,10 +324,8 @@ foss-checks: vendor
 # TODO: re-enable these linters !
 LINT_ARGS := --disable gosimple,govet,structcheck,errcheck,goimports,unused
 
-.PHONY: go-meta-linter
-go-meta-linter: vendor/.up-to-date $(GENERATED_GO_FILES)
-	# Run staticcheck stand-alone since gometalinter runs concurrent copies, which
-	# uses a lot of RAM.
+.PHONY: golangci-lint
+golangci-lint: vendor/.up-to-date
 	$(DOCKER_RUN) $(CALICO_BUILD) golangci-lint run --deadline 5m $(LINT_ARGS)
 
 # Run go fmt on all our go files.
