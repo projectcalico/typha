@@ -39,6 +39,8 @@ ifeq ($(ARCH),x86_64)
     override ARCH=amd64
 endif
 
+PACKAGE_NAME?=github.com/projectcalico/typha
+
 # Build mounts for running in "local build" mode. Mount in libcalico, but null out
 # the vendor directory. This allows an easy build using local development code,
 # assuming that there is a local checkout of libcalico in the same directory as this repo.
@@ -79,7 +81,6 @@ VALIDARCHES = $(filter-out $(EXCLUDEARCH),$(ARCHES))
 
 ###############################################################################
 BUILD_IMAGE=calico/typha
-PACKAGE_NAME?=github.com/projectcalico/typha
 
 PUSH_IMAGES?=$(BUILD_IMAGE) quay.io/calico/typha
 RELEASE_IMAGES?=gcr.io/projectcalico-org/typha eu.gcr.io/projectcalico-org/typha asia.gcr.io/projectcalico-org/typha us.gcr.io/projectcalico-org/typha
@@ -207,7 +208,7 @@ update-libcalico:
 	    sed -i "/libcalico-go/d" go.mod go.sum; \
 	    go get $(LIBCALICO_REPO)@$(LIBCALICO_VERSION); \
 	    if [ "$(LIBCALICO_REPO)" != "github.com/projectcalico/libcalico-go" ]; then \
-	      echo "replace github.com/projectcalico/libcalico-go => $(LIBCALICO_REPO) v0.0.0-$(LIBCALICO_VERSION)" >> go.mod; \
+	      go mod edit -replace github.com/projectcalico/libcalico-go=$(LIBCALICO_REPO)@$(LIBCALICO_VERSION); \
             fi;\
           go mod vendor; \
         fi'
