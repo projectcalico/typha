@@ -41,13 +41,17 @@ endif
 
 PACKAGE_NAME?=github.com/projectcalico/typha
 
-# Build mounts for running in "local build" mode. Mount in libcalico, but null out
-# the vendor directory. This allows an easy build using local development code,
+# Build mounts for running in "local build" mode. This allows an easy build using local development code,
 # assuming that there is a local checkout of libcalico in the same directory as this repo.
-LOCAL_BUILD_MOUNTS ?=
-ifeq ($(LOCAL_BUILD),true)
-LOCAL_BUILD_MOUNTS = -v $(CURDIR)/../libcalico-go:/$(PACKAGE_NAME)/vendor/github.com/projectcalico/libcalico-go:ro \
-	-v $(CURDIR)/.empty:/$(PACKAGE_NAME)/vendor/github.com/projectcalico/libcalico-go/vendor:ro
+PHONY:local_build
+
+ifdef LOCAL_BUILD
+EXTRA_DOCKER_ARGS+=-v $(CURDIR)/../libcalico-go:/github.com/projectcalico/libcalico-go:rw
+local_build:
+	go mod edit -replace=github.com/projectcalico/libcalico-go=../libcalico-go
+else
+local_build:
+	-go mod edit -dropreplace=github.com/projectcalico/libcalico-go
 endif
 
 # we want to be able to run the same recipe on multiple targets keyed on the image name
@@ -141,8 +145,7 @@ endif
 LOCAL_USER_ID:=$(shell id -u)
 LOCAL_GROUP_ID:=$(shell id -g)
 
-EXTRA_DOCKER_ARGS := -e GO111MODULE=on
-GINKGO_ARGS := -mod=vendor
+EXTRA_DOCKER_ARGS	+= -e GO111MODULE=on
 
 # Allow libcalico-go and the ssh auth sock to be mapped into the build container.
 ifdef LIBCALICOGO_PATH
@@ -169,7 +172,6 @@ clean:
 	rm -rf bin \
 	       docker-image/bin \
 	       build \
-	       vendor \
 	       .go-pkg-cache \
 	       report/*.xml \
 	       release-notes-*
@@ -185,13 +187,6 @@ build: bin/calico-typha
 build-all: $(addprefix sub-build-,$(VALIDARCHES))
 sub-build-%:
 	$(MAKE) build ARCH=$*
-
-# vendor is a shortcut for force rebuilding the go vendor directory.
-.PHONY: vendor
-vendor: vendor/.up-to-date
-vendor/.up-to-date: go.mod go.sum
-	$(DOCKER_RUN) $(CALICO_BUILD) go mod vendor
-	touch vendor/.up-to-date
 
 # Default the libcalico repo and version but allow them to be overridden
 LIBCALICO_BRANCH?=$(shell git rev-parse --abbrev-ref HEAD)
@@ -210,25 +205,24 @@ update-libcalico:
 	    if [ "$(LIBCALICO_REPO)" != "github.com/projectcalico/libcalico-go" ]; then \
 	      go mod edit -replace github.com/projectcalico/libcalico-go=$(LIBCALICO_REPO)@$(LIBCALICO_VERSION); \
             fi;\
-          go mod vendor; \
         fi'
 
 bin/calico-typha: bin/calico-typha-$(ARCH)
 	ln -f bin/calico-typha-$(ARCH) bin/calico-typha
 
-bin/calico-typha-$(ARCH): $(SRC_FILES) vendor/.up-to-date
+bin/calico-typha-$(ARCH): $(SRC_FILES) local_build
 	@echo Building typha...
 	mkdir -p bin
-	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) \
-	    sh -c 'GO111MODULE=on go build -v -i -o $@ -v $(LDFLAGS) "$(PACKAGE_NAME)/cmd/calico-typha" && \
+	$(DOCKER_RUN) $(CALICO_BUILD) \
+	    sh -c 'go build -v -i -o $@ -v $(LDFLAGS) "$(PACKAGE_NAME)/cmd/calico-typha" && \
 		( ldd $@ 2>&1 | grep -q -e "Not a valid dynamic program" \
 		-e "not a dynamic executable" || \
 		( echo "Error: bin/calico-typha was not statically linked"; false ) )'
 
-bin/typha-client-$(ARCH): $(SRC_FILES) vendor/.up-to-date
+bin/typha-client-$(ARCH): $(SRC_FILES) local_build
 	@echo Building typha client...
 	mkdir -p bin
-	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) \
+	$(DOCKER_RUN) $(CALICO_BUILD) \
 	    sh -c 'GO111MODULE=on go build -v -i -o $@ -v $(LDFLAGS) "$(PACKAGE_NAME)/cmd/typha-client" && \
 		( ldd $@ 2>&1 | grep -q -e "Not a valid dynamic program" \
 		-e "not a dynamic executable" || \
@@ -314,7 +308,7 @@ sub-tag-images-%:
 static-checks:
 	$(MAKE) golangci-lint
 
-foss-checks: vendor
+foss-checks:
 	@echo Running $@...
 	@docker run --rm -v $(CURDIR):/$(PACKAGE_NAME):rw \
 	  -e LOCAL_USER_ID=$(LOCAL_USER_ID) \
@@ -326,13 +320,13 @@ foss-checks: vendor
 LINT_ARGS := --disable gosimple,govet,structcheck,errcheck,goimports,unused
 
 .PHONY: golangci-lint
-golangci-lint: vendor/.up-to-date
+golangci-lint:
 	$(DOCKER_RUN) $(CALICO_BUILD) golangci-lint run --deadline 5m $(LINT_ARGS)
 
 # Run go fmt on all our go files.
 .PHONY: go-fmt goimports fix
 go-fmt goimports fix:
-	$(DOCKER_RUN) $(CALICO_BUILD) sh -c 'ls -1d */ | grep -vw vendor | \
+	$(DOCKER_RUN) $(CALICO_BUILD) sh -c 'ls -1d */ | \
 	                          grep -v -e "^\\.$$" | \
 	                          xargs goimports -w -local github.com/projectcalico/'
 
@@ -345,9 +339,9 @@ install-git-hooks:
 # Unit Tests
 ###############################################################################
 .PHONY: ut
-ut combined.coverprofile: vendor/.up-to-date $(SRC_FILES)
+ut combined.coverprofile: $(SRC_FILES)
 	@echo Running Go UTs.
-	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) ./utils/run-coverage
+	$(DOCKER_RUN) $(CALICO_BUILD) ./utils/run-coverage
 
 ###############################################################################
 # CI/CD
@@ -477,14 +471,14 @@ endif
 # Developer helper scripts (not used by build or test)
 ###############################################################################
 .PHONY: ut-no-cover
-ut-no-cover: vendor/.up-to-date $(SRC_FILES)
+ut-no-cover: $(SRC_FILES)
 	@echo Running Go UTs without coverage.
-	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) ginkgo -r $(GINKGO_ARGS)
+	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) ginkgo -r
 
 .PHONY: ut-watch
-ut-watch: vendor/.up-to-date $(SRC_FILES)
+ut-watch: $(SRC_FILES)
 	@echo Watching go UTs for changes...
-	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) ginkgo watch -r $(GINKGO_ARGS)
+	$(DOCKER_RUN) $(LOCAL_BUILD_MOUNTS) $(CALICO_BUILD) ginkgo watch -r
 
 # Launch a browser with Go coverage stats for the whole project.
 .PHONY: cover-browser
@@ -543,9 +537,6 @@ help:
 	@echo
 	@echo "Maintenance:"
 	@echo
-	@echo "  make update-vendor  Update the vendor directory with new "
-	@echo "                      versions of upstream packages.  Record results"
-	@echo "                      in go.mod."
 	@echo "  make go-fmt        Format our go code."
 	@echo "  make clean         Remove binary files."
 	@echo "-----------------------------------------"
