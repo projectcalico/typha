@@ -155,7 +155,7 @@ ifdef SSH_AUTH_SOCK
   EXTRA_DOCKER_ARGS += -v $(SSH_AUTH_SOCK):/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent
 endif
 
-DOCKER_RUN := mkdir -p .go-pkg-cache && \
+DOCKER_RUN := mkdir -p .go-pkg-cache $(GOPATH)/pkg/mod && \
                    docker run --rm \
                               --net=host \
                               $(EXTRA_DOCKER_ARGS) \
