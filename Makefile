@@ -46,7 +46,7 @@ PACKAGE_NAME?=github.com/projectcalico/typha
 PHONY:local_build
 
 ifdef LOCAL_BUILD
-EXTRA_DOCKER_ARGS+=-v $(CURDIR)/../libcalico-go:/github.com/projectcalico/libcalico-go:rw
+EXTRA_DOCKER_ARGS+=-v $(CURDIR)/../libcalico-go:/go/src/github.com/projectcalico/libcalico-go:rw
 local_build:
 	go mod edit -replace=github.com/projectcalico/libcalico-go=../libcalico-go
 else
@@ -160,19 +160,19 @@ DOCKER_RUN := mkdir -p .go-pkg-cache && \
                               --net=host \
                               $(EXTRA_DOCKER_ARGS) \
                               -e LOCAL_USER_ID=$(LOCAL_USER_ID) \
-                              -v $(CURDIR):/$(PACKAGE_NAME):rw \
-                              -v $(CURDIR)/.go-pkg-cache:/go-cache:rw \
 			      -e GOCACHE=/go-cache \
-                              -w /$(PACKAGE_NAME) \
-                              -e GOARCH=$(ARCH)
+                              -e GOARCH=$(ARCH) \
+			      -e GOPATH=/go \
+                              -v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
+                              -v $(CURDIR)/.go-pkg-cache:/go-cache:rw \
+                              -v $(GOPATH)/pkg/mod:/go/pkg/mod:rw \
+                              -w /go/src/$(PACKAGE_NAME)
 
 .PHONY: clean
 clean:
-	-chmod -R +w .go-pkg-cache
 	rm -rf bin \
 	       docker-image/bin \
 	       build \
-	       .go-pkg-cache \
 	       report/*.xml \
 	       release-notes-*
 	find . -name "*.coverprofile" -type f -delete
@@ -310,10 +310,10 @@ static-checks:
 
 foss-checks:
 	@echo Running $@...
-	@docker run --rm -v $(CURDIR):/$(PACKAGE_NAME):rw \
+	@docker run --rm -v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
 	  -e LOCAL_USER_ID=$(LOCAL_USER_ID) \
 	  -e FOSSA_API_KEY=$(FOSSA_API_KEY) \
-	  -w /$(PACKAGE_NAME) \
+	  -w /go/src/$(PACKAGE_NAME) \
 	  $(CALICO_BUILD) /usr/local/bin/fossa
 
 # TODO: re-enable these linters !
