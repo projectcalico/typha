@@ -155,18 +155,21 @@ ifdef SSH_AUTH_SOCK
   EXTRA_DOCKER_ARGS += -v $(SSH_AUTH_SOCK):/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent
 endif
 
-DOCKER_RUN := mkdir -p .go-pkg-cache /go/pkg/mod && \
-                   docker run --rm \
-                              --net=host \
-                              $(EXTRA_DOCKER_ARGS) \
-                              -e LOCAL_USER_ID=$(LOCAL_USER_ID) \
-			      -e GOCACHE=/go-cache \
-                              -e GOARCH=$(ARCH) \
-			      -e GOPATH=/go \
-                              -v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
-                              -v $(CURDIR)/.go-pkg-cache:/go-cache:rw \
-                              -v /go/pkg/mod:/go/pkg/mod:rw \
-                              -w /go/src/$(PACKAGE_NAME)
+ifdef GOPATH
+	EXTRA_DOCKER_ARGS += -v $(GOPATH)/pkg/mod:/go/pkg/mod:rw
+endif
+
+DOCKER_RUN := mkdir -p .go-pkg-cache && \
+	docker run --rm \
+		--net=host \
+		$(EXTRA_DOCKER_ARGS) \
+		-e LOCAL_USER_ID=$(LOCAL_USER_ID) \
+		-e GOCACHE=/go-cache \
+		-e GOARCH=$(ARCH) \
+		-e GOPATH=/go \
+		-v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
+		-v $(CURDIR)/.go-pkg-cache:/go-cache:rw \
+		-w /go/src/$(PACKAGE_NAME)
 
 .PHONY: clean
 clean:
