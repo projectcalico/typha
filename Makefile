@@ -155,7 +155,7 @@ ifdef SSH_AUTH_SOCK
   EXTRA_DOCKER_ARGS += -v $(SSH_AUTH_SOCK):/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent
 endif
 
-DOCKER_RUN := mkdir -p .go-pkg-cache $(GOPATH)/pkg/mod && \
+DOCKER_RUN := mkdir -p .go-pkg-cache /go/pkg/mod && \
                    docker run --rm \
                               --net=host \
                               $(EXTRA_DOCKER_ARGS) \
@@ -165,7 +165,7 @@ DOCKER_RUN := mkdir -p .go-pkg-cache $(GOPATH)/pkg/mod && \
 			      -e GOPATH=/go \
                               -v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
                               -v $(CURDIR)/.go-pkg-cache:/go-cache:rw \
-                              -v $(GOPATH)/pkg/mod:/go/pkg/mod:rw \
+                              -v /go/pkg/mod:/go/pkg/mod:rw \
                               -w /go/src/$(PACKAGE_NAME)
 
 .PHONY: clean
