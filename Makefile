@@ -195,20 +195,19 @@ sub-build-%:
 LIBCALICO_BRANCH?=$(shell git rev-parse --abbrev-ref HEAD)
 LIBCALICO_REPO?=github.com/projectcalico/libcalico-go
 LIBCALICO_VERSION?=$(shell git ls-remote git@github.com:projectcalico/libcalico-go $(LIBCALICO_BRANCH) 2>/dev/null | cut -f 1)
-LIBCALICO_OLDVER?=$(shell grep libcalico-go go.mod | cut -d' ' -f2)
+LIBCALICO_OLDVER?=$(shell go list -m -f "{{.Version}}" github.com/projectcalico/libcalico-go)
 
 ## Update libcalico pin in go.mod
 update-libcalico:
-	$(DOCKER_RUN) $(CALICO_BUILD) sh -c '\
-        echo "Updating libcalico-go to $(LIBCALICO_VERSION) from $(LIBCALICO_REPO)"; \
-        echo "Old version: $(LIBCALICO_OLDVER)";\
-	if [ "$(LIBCALICO_VERSION)" != "$(LIBCALICO_OLDVER)" ]; then \
-	    sed -i "/libcalico-go/d" go.mod go.sum; \
-	    go get $(LIBCALICO_REPO)@$(LIBCALICO_VERSION); \
-	    if [ "$(LIBCALICO_REPO)" != "github.com/projectcalico/libcalico-go" ]; then \
-	      go mod edit -replace github.com/projectcalico/libcalico-go=$(LIBCALICO_REPO)@$(LIBCALICO_VERSION); \
-            fi;\
-        fi'
+	$(DOCKER_RUN) -i $(CALICO_BUILD) sh -c '\
+	if [ $(LIBCALICO_VERSION) != $(LIBCALICO_OLDVER) ]; then \
+		echo "Updating libcalico version $(LIBCALICO_OLDVER) to $(LIBCALICO_VERSION) from $(LIBCALICO_REPO)"; \
+		go mod edit -droprequire github.com/projectcalico/libcalico-go; \
+		go get $(LIBCALICO_REPO)@$(LIBCALICO_VERSION); \
+		if [ $(LIBCALICO_REPO) != "github.com/projectcalico/libcalico-go" ]; then \
+			go mod edit -replace github.com/projectcalico/typha=$(LIBCALICO_REPO)@$(LIBCALICO_VERSION); \
+		fi;\
+	fi'
 
 bin/calico-typha: bin/calico-typha-$(ARCH)
 	ln -f bin/calico-typha-$(ARCH) bin/calico-typha
