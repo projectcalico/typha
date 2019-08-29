@@ -215,7 +215,7 @@ type MsgServerHello struct {
 	// only supports SyncerTypeFelix.
 	SyncerType SyncerType
 
-	// SupportsNodeResourceUpdates specifies whether this Typha supports node resource updates.
+	// SupportsNodeResourceUpdates provides to the client whether this Typha supports node resource updates.
 	SupportsNodeResourceUpdates bool
 }
 type MsgSyncStatus struct {

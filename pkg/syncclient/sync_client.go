@@ -179,7 +179,7 @@ func (s *SyncerClient) Start(cxt context.Context) error {
 // SupportsNodeResourceUpdates waits for the Typha server to send a hello and returns true if
 // the server supports node resource updates. If the given timeout is reached, an error is returned.
 func (s *SyncerClient) SupportsNodeResourceUpdates(timeout time.Duration) (bool, error) {
-	// If we've already gotten a MsgServerHello just return with the value
+	// If a previous call has already marked the handshake as complete, then just return the value.
 	if s.handshakeStatus.complete {
 		return s.supportsNodeResourceUpdates, nil
 	}
