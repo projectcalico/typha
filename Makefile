@@ -335,7 +335,7 @@ sub-tag-images-%:
 ###############################################################################
 .PHONY: static-checks
 static-checks:
-	$(DOCKER_RUN) $(CALICO_BUILD) golangci-lint run --deadline 5m -v
+	$(DOCKER_RUN) $(CALICO_BUILD) golangci-lint run --deadline 5m
 
 foss-checks:
 	@echo Running $@...
