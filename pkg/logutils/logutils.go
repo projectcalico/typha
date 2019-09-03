@@ -26,7 +26,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/mipearson/rfw"
 	"github.com/prometheus/client_golang/prometheus"
@@ -199,14 +198,12 @@ func ConfigureLogging(configParams *config.Config) {
 		log.WithError(fileOpenErr).WithField("file", configParams.LogFilePath).
 			Fatal("Failed to open log file.")
 	}
-	if sysErr != nil {
-		// We don't bail out if we can't connect to syslog because our default is to try to
-		// connect but it's very common for syslog to be disabled when we're run in a
-		// container.
-		log.WithError(sysErr).Error(
-			"Failed to connect to syslog. To prevent this error, either set config " +
-				"parameter LogSeveritySys=none or configure a local syslog service.")
-	}
+	// We don't bail out if we can't connect to syslog because our default is to try to
+	// connect but it's very common for syslog to be disabled when we're run in a
+	// container.
+	log.WithError(sysErr).Error(
+		"Failed to connect to syslog. To prevent this error, either set config " +
+			"parameter LogSeveritySys=none or configure a local syslog service.")
 }
 
 // filterLevels returns all the logrus.Level values <= maxLevel.
@@ -518,11 +515,6 @@ type BackgroundHook struct {
 	syslogLevel log.Level
 
 	destinations []*Destination
-
-	// Our own copy of the dropped logs counter, used for logging out when we drop logs.
-	// Must be read/updated using atomic.XXX.
-	numDroppedLogs  uint64
-	lastDropLogTime time.Duration
 }
 
 func NewBackgroundHook(levels []log.Level, syslogLevel log.Level, destinations []*Destination) *BackgroundHook {
