@@ -200,8 +200,7 @@ var _ = Describe("Daemon", func() {
 				go func() {
 					defer GinkgoRecover()
 					defer cancelFunc()
-					err := d.LoadConfiguration(cxt)
-					Expect(err).NotTo(HaveOccurred())
+					_ = d.LoadConfiguration(cxt)
 				}()
 				Eventually(func() bool {
 					flagMutex.Lock()
