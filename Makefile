@@ -1,19 +1,28 @@
 PACKAGE_NAME?=github.com/projectcalico/typha
-
 GO_BUILD_VER=v0.27
 
+###############################################################################
+# Download and include Makefile.common before anything else
+###############################################################################
 MAKE_BRANCH?=$(GO_BUILD_VER)
-MAKE_REPO?=https://raw.githubusercontent.com/projectcalico/go-build/$(MAKE_BRANCH)/Makefile.common
+MAKE_REPO?=https://raw.githubusercontent.com/projectcalico/go-build/$(MAKE_BRANCH)
 
-get_common:=$(shell wget -nc -nv $(MAKE_REPO) -O Makefile.common)
+Makefile.common: Makefile.common.$(MAKE_BRANCH)
+	cp "$<" "$@"
+Makefile.common.$(MAKE_BRANCH):
+	# Clean up any files downloaded from other branches so they don't accumulate.
+	rm -f Makefile.common.*
+	wget -nv $(MAKE_REPO)/Makefile.common -O "$@"
+
 include Makefile.common
+
+###############################################################################
 
 # list of arches *not* to build when doing *-all
 #    until s390x works correctly
 EXCLUDEARCH ?= s390x
 VALIDARCHES = $(filter-out $(EXCLUDEARCH),$(ARCHES))
 
-###############################################################################
 BUILD_IMAGE=calico/typha
 
 PUSH_IMAGES?=$(BUILD_IMAGE) quay.io/calico/typha
@@ -93,6 +102,7 @@ bin/typha-client-$(ARCH): $(SRC_FILES) local_build
 		( ldd $@ 2>&1 | grep -q -e "Not a valid dynamic program" \
 		-e "not a dynamic executable" || \
 		( echo "Error: bin/typha-client was not statically linked"; false ) )'
+
 ###############################################################################
 # Building the image
 ###############################################################################
