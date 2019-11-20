@@ -1,7 +1,12 @@
-get_common:=$(shell wget -nv https://raw.githubusercontent.com/rafaelvanoni/common/master/Makefile.common -O Makefile.common)
-include Makefile.common
-
 PACKAGE_NAME?=github.com/projectcalico/typha
+
+GO_BUILD_VER=v0.27
+
+MAKE_BRANCH?=$(GO_BUILD_VER)
+MAKE_REPO?=https://raw.githubusercontent.com/projectcalico/go-build/$(MAKE_BRANCH)/Makefile.common
+
+get_common:=$(shell wget -nc -nv $(MAKE_REPO) -O Makefile.common)
+include Makefile.common
 
 # list of arches *not* to build when doing *-all
 #    until s390x works correctly
@@ -149,6 +154,9 @@ k8sfv-test: image
 	cd .. && git clone https://github.com/projectcalico/felix.git && cd felix; \
 	[ ! -e ../typha/semaphore-felix-branch ] || git checkout $(cat ../typha/semaphore-felix-branch); \
 	JUST_A_MINUTE=true USE_TYPHA=true FV_TYPHAIMAGE=$(BUILD_IMAGE):latest TYPHA_VERSION=latest $(MAKE) k8sfv-test
+
+st:
+	@echo "No STs available."
 
 ###############################################################################
 # Release
