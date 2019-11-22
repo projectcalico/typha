@@ -300,37 +300,3 @@ bin/calico-typha.transfer-url: bin/calico-typha-$(ARCH)
 .PHONY: update-tools
 update-tools:
 	go get -u github.com/onsi/ginkgo/ginkgo
-
-help:
-	@echo "Typha Makefile"
-	@echo
-	@echo "Dependencies: docker 1.12+; go 1.8+"
-	@echo
-	@echo "For any target, set ARCH=<target> to build for a given target."
-	@echo "For example, to build for arm64:"
-	@echo
-	@echo "  make build ARCH=arm64"
-	@echo
-	@echo "Initial set-up:"
-	@echo
-	@echo "  make update-tools  Update/install the go build dependencies."
-	@echo
-	@echo "Builds:"
-	@echo
-	@echo "  make all	   Build all the binary packages."
-	@echo "  make image	 Build $(BUILD_IMAGE) docker image."
-	@echo
-	@echo "Tests:"
-	@echo
-	@echo "  make ut		Run UTs."
-	@echo "  make go-cover-browser  Display go code coverage in browser."
-	@echo
-	@echo "Maintenance:"
-	@echo
-	@echo "  make go-fmt	Format our go code."
-	@echo "  make clean	 Remove binary files."
-	@echo "-----------------------------------------"
-	@echo "ARCH (target):	  $(ARCH)"
-	@echo "BUILDARCH (host):       $(BUILDARCH)"
-	@echo "CALICO_BUILD:     $(CALICO_BUILD)"
-	@echo "-----------------------------------------"
