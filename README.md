@@ -28,8 +28,8 @@ This has many advantages:
 
 ## When should I use Typha?
 
-We recommend using Typha only if you're using the Kubernetes API Datastore and you have more than 50 
-Kubernetes nodes.  While Typha can be used with etcd, etcd v3 is optimised to handle many clients
+We recommend using Typha only if you're using the Kubernetes API Datastore.
+While Typha can be used with etcd, etcd v3 is optimised to handle many clients
 already so we do not recommend adding Typha if you're using etcd.
 
 ## How can I start using Typha?
