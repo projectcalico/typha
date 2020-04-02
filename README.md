@@ -28,7 +28,7 @@ This has many advantages:
 
 ## When should I use Typha?
 
-We recommend using Typha only if you're using the Kubernetes API Datastore.
+We recommend using Typha when the Kubernetes API Datastore is supporting Felix.
 While Typha can be used with etcd, etcd v3 is optimised to handle many clients
 already so we do not recommend adding Typha if you're using etcd.
 
