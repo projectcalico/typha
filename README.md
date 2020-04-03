@@ -28,9 +28,12 @@ This has many advantages:
 
 ## When should I use Typha?
 
-We recommend using Typha when the Kubernetes API Datastore is supporting Felix.
-While Typha can be used with etcd, etcd v3 is optimised to handle many clients
-already so we do not recommend adding Typha if you're using etcd.
+We recommend always using Typha when you are using the Kubernetes API datastore.
+However, Typha is strictly necessary when you are using the Kubernetes API datastore
+with a cluster greater than 50 nodes.
+
+Typha is generally not required for Calico deployments using an etcdv3 datastore directly.
+
 
 ## How can I start using Typha?
 
