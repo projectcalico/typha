@@ -28,9 +28,13 @@ import (
 type TyphaConfig struct {
 	Addr           string
 	K8sServiceName string
-	K8sNamespace   string
-	ReadTimeout    time.Duration
-	WriteTimeout   time.Duration
+
+	// This is defaulted to "kube-system" if not explicitly specified.
+	K8sNamespace string
+
+	// These are defaulted in the typha sync-client if not specified.
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
 
 	// Client-side TLS config for communication with Typha.  If any of these are
 	// specified, they _all_ must be - except that either CN or URISAN may be left unset.
@@ -49,7 +53,10 @@ type TyphaConfig struct {
 // The supportedPrefixes is the set of allowed prefixes for each environment name. Name format is therefore:
 // <prefix>TYPHA<fieldname uppercase>,  e.g.  CONFD_TYPHAADDR
 func ReadTyphaConfig(supportedPrefixes []string) TyphaConfig {
-	typhaConfig := &TyphaConfig{}
+	typhaConfig := &TyphaConfig{
+		// Apply defaults before loading the config.
+		K8sNamespace: "kube-system",
+	}
 	kind := reflect.TypeOf(*typhaConfig)
 	for ii := 0; ii < kind.NumField(); ii++ {
 		field := kind.Field(ii)
