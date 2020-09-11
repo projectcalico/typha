@@ -1,5 +1,7 @@
 PACKAGE_NAME?=github.com/projectcalico/typha
-GO_BUILD_VER=v0.45
+GO_BUILD_VER=v0.47
+
+SEMAPHORE_PROJECT_ID=c2ea3f0a-58a0-427a-9ed5-6eff8d6543b3
 
 # This needs to be evaluated before the common makefile is included.
 # This var contains some default values that the common makefile may append to.
