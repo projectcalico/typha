@@ -1179,11 +1179,8 @@ var _ = Describe("with server requiring TLS", func() {
 		}
 		// Connect with specified TLS options.
 		clientState := createClient(options)
-		if clientCertName != "" && !expectConnection {
-			// We're attempting a TLS connection but expecting it to fail.  That shows
-			// up as Start() returning an error.
-			Expect(clientState.startErr).To(HaveOccurred())
-		} else {
+		if clientCertName == "" || expectConnection {
+			// Expecting this connection to succeed so there should be no error from Start().
 			Expect(clientState.startErr).NotTo(HaveOccurred())
 		}
 
@@ -1208,14 +1205,17 @@ var _ = Describe("with server requiring TLS", func() {
 			}))
 			// Now get the client to disconnect.
 			clientState.clientCancel()
-		} else {
-			// Client connection should have failed, so should not see that state.
+		}
+
+		// For successful connections we just told the client to stop.  For unsuccessful connections
+		// it should detect the failure and stop on its own.
+		Eventually(connectionClosed).Should(BeClosed())
+
+		if ! expectConnection {
+			// Client connection should have failed, so should not have got any updates.
 			Consistently(clientState.recorder.Status).Should(Equal(api.SyncStatus(0)))
 			Consistently(clientState.recorder.KVs).Should(Equal(map[string]api.Update{}))
 		}
-
-		// Synchronize with the client connection being closed.
-		Eventually(connectionClosed).Should(BeClosed())
 	}
 
 	testNonTLS := func() {
