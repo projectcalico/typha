@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Tigera, Inc. All rights reserved.
+// Copyright (c) 2020-2021 Tigera, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package calc_test
 import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v3 "github.com/projectcalico/libcalico-go/lib/apis/v3"
+	apiv3 "github.com/projectcalico/api/pkg/apis/projectcalico/v3"
 	"github.com/projectcalico/libcalico-go/lib/backend/api"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 	. "github.com/projectcalico/typha/pkg/calc"
@@ -55,12 +55,12 @@ var _ = Describe("ValidationFilter", func() {
 	It("it should reject an invalid v3 Profile", func() {
 		v.OnUpdates([]api.Update{{
 			KVPair: model.KVPair{
-				Key: model.ResourceKey{Name: "prof1", Kind: v3.KindProfile},
+				Key: model.ResourceKey{Name: "prof1", Kind: apiv3.KindProfile},
 				Value: &v3.Profile{
 					ObjectMeta: v1.ObjectMeta{
 						Name: "prof1",
 					},
-					Spec: v3.ProfileSpec{
+					Spec: apiv3.ProfileSpec{
 						LabelsToApply: map[string]string{
 							"a//b": "c//d",
 						},
@@ -76,12 +76,12 @@ var _ = Describe("ValidationFilter", func() {
 	It("it should allow a valid v3 Profile", func() {
 		v.OnUpdates([]api.Update{{
 			KVPair: model.KVPair{
-				Key: model.ResourceKey{Name: "prof1", Kind: v3.KindProfile},
-				Value: &v3.Profile{
+				Key: model.ResourceKey{Name: "prof1", Kind: apiv3.KindProfile},
+				Value: &apiv3.Profile{
 					ObjectMeta: v1.ObjectMeta{
 						Name: "prof1",
 					},
-					Spec: v3.ProfileSpec{
+					Spec: apiv3.ProfileSpec{
 						LabelsToApply: map[string]string{
 							"a--b": "c--d",
 						},

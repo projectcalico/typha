@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"sync"
 
-	v3 "github.com/projectcalico/libcalico-go/lib/apis/v3"
+	libapiv3 "github.com/projectcalico/libcalico-go/lib/apis/v3"
 	"github.com/projectcalico/libcalico-go/lib/backend/api"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 )
@@ -50,7 +50,7 @@ func (c *NodeCounter) OnUpdates(updates []api.Update) {
 	for _, update := range updates {
 		switch k := update.Key.(type) {
 		case model.ResourceKey:
-			if k.Kind == v3.KindNode {
+			if k.Kind == libapiv3.KindNode {
 				name := k.Name
 				switch update.UpdateType {
 				case api.UpdateTypeKVNew:
