@@ -56,7 +56,7 @@ var _ = Describe("ValidationFilter", func() {
 		v.OnUpdates([]api.Update{{
 			KVPair: model.KVPair{
 				Key: model.ResourceKey{Name: "prof1", Kind: apiv3.KindProfile},
-				Value: &v3.Profile{
+				Value: &apiv3.Profile{
 					ObjectMeta: v1.ObjectMeta{
 						Name: "prof1",
 					},
