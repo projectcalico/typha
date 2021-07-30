@@ -13,7 +13,7 @@ DEV_TAG_SUFFIX        ?= 0.dev
 
 # If this is a release, also tag and push additional images.
 ifeq ($(RELEASE),true)
-TYPHA_IMAGE    ?=typha
+TYPHA_IMAGE    ?=calico/typha
 DEV_REGISTRIES ?=quay.io/calico calico $(RELEASE_REGISTRIES)
 else
 TYPHA_IMAGE    ?=calico/typha
