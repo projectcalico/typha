@@ -26,5 +26,6 @@ require (
 
 replace (
 	github.com/sirupsen/logrus => github.com/projectcalico/logrus v1.0.4-calico
+	google.golang.org/grpc => google.golang.org/grpc v1.29.1
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 )
