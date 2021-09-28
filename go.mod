@@ -20,3 +20,8 @@ require (
 )
 
 replace github.com/sirupsen/logrus => github.com/projectcalico/logrus v1.0.4-calico
+
+replace (
+	github.com/projectcalico/api => github.com/song-jiang/api v0.1.2-0.20210927153948-3474c0f6c406
+	github.com/projectcalico/libcalico-go => github.com/song-jiang/libcalico-go v1.6.1-0.20210928140900-83bbfc28e5cb
+)

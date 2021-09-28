@@ -476,7 +476,7 @@ func (s ClientV3Shim) TunnelIPAllocationSyncerByIface(callbacks bapi.SyncerCallb
 	return tunnelipsyncer.New(s.Backend(), callbacks, "")
 }
 
-func (s ClientV3Shim) NoeStatusSyncerByIface(callbacks bapi.SyncerCallbacks) bapi.Syncer {
+func (s ClientV3Shim) NodeStatusSyncerByIface(callbacks bapi.SyncerCallbacks) bapi.Syncer {
 	return nodestatussyncer.New(s.Backend(), callbacks)
 }
 
