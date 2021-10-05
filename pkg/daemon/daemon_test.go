@@ -360,7 +360,7 @@ func (b *mockDatastore) KubeControllersConfiguration() clientv3.KubeControllersC
 }
 
 // CalicoNodeStatus returns an interface for managing the Calico node status resources.
-func (b *mockDatastore) CalicoNodeStatus() clientv3.NetworkSetInterface {
+func (b *mockDatastore) CalicoNodeStatus() clientv3.CalicoNodeStatusInterface {
 	panic("not implemented")
 }
 
