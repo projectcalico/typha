@@ -11,7 +11,7 @@ require (
 	github.com/mipearson/rfw v0.0.0-20170619235010-6f0a6f3266ba
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.1
-	github.com/projectcalico/api v0.0.0-20211006181607-6c171671b99a
+	github.com/projectcalico/api v0.0.0-20211011193936-5bcbc3a5e8a9
 	github.com/projectcalico/libcalico-go v1.7.2-0.20211006193733-972f2b1cc5e9
 	github.com/prometheus/client_golang v1.4.0
 	github.com/sirupsen/logrus v1.4.2
@@ -21,3 +21,5 @@ require (
 )
 
 replace github.com/sirupsen/logrus => github.com/projectcalico/logrus v1.0.4-calico
+
+replace github.com/projectcalico/libcalico-go => github.com/song-jiang/libcalico-go v1.6.1-0.20211011195348-ae3b5accbfa7
