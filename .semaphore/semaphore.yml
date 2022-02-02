@@ -64,7 +64,7 @@ blocks:
             minutes: 120
           commands:
             - make image
-            - cd .. && git clone https://github.com/projectcalico/felix.git && cd felix
+            - cd .. && git clone https://github.com/projectcalico/felix.git -b release-v3.20 && cd felix
             - JUST_A_MINUTE=true USE_TYPHA=true FV_TYPHAIMAGE=calico/typha:latest TYPHA_VERSION=latest make k8sfv-test
 
   - name: 'Foss Checks'
