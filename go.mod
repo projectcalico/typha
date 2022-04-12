@@ -10,8 +10,8 @@ require (
 	github.com/mipearson/rfw v0.0.0-20170619235010-6f0a6f3266ba
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.1
-	github.com/projectcalico/api v0.0.0-20220411213543-effb8939528e
-	github.com/projectcalico/libcalico-go v1.7.2-0.20220411224106-e73d057e6c68
+	github.com/projectcalico/api v0.0.0-20220412173007-91d7bea04e9e
+	github.com/projectcalico/libcalico-go v1.7.2-0.20220412173036-e9d17133c15c
 	github.com/prometheus/client_golang v1.4.0
 	github.com/sirupsen/logrus v1.4.2
 	gopkg.in/go-playground/validator.v9 v9.28.0 // indirect
